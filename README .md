@@ -1,4 +1,24 @@
-# Packing API (NestJS)
+# Teste Técnico — Desenvolvedor(a) Node.js
+
+Este repositório contém a solução para os **dois exercícios** do teste técnico:
+
+1. **Packing API (NestJS)** — API para calcular automaticamente a **embalagem de pedidos** em caixas de papelão pré-definidas.
+2. **Horários de Aula (SQL)** — Script SQL que modela a base escolar e responde às consultas pedidas.
+
+---
+
+## 📂 Estrutura do Repositório
+
+```
+teste-técnico/
+├── exercicio-1-empacotamento/    # Projeto NestJS com API de embalagens
+├── exercicio-2-horarios-de-aula/ # Scripts SQL (DDL, inserts e queries)
+└── README.md                     # Este documento
+```
+
+---
+
+# 🚀 Exercício 1 — Packing API (NestJS)
 
 API para calcular automaticamente a **embalagem de pedidos** em caixas de papelão pré-definidas.  
 Projeto feito em **NestJS**, com **JWT** (login de exemplo), documentação **Swagger**, testes **Jest** e **Docker** (com Compose opcional).
@@ -183,9 +203,6 @@ docker compose down
 docker-compose down
 ```
 
-> Se seu sistema não tiver Compose v2, instale o plugin (`docker-compose-plugin`) ou use o binário `docker-compose`.  
-> O repositório já inclui um `docker-compose.yml` minimalista.
-
 ---
 
 ## Endpoints
@@ -194,176 +211,76 @@ docker-compose down
 
 Retorna status básico da aplicação (para liveness/healthcheck).
 
-**Resposta**
-
-```json
-{
-  "status": "ok",
-  "uptime": 42,
-  "timestamp": "2025-09-20T20:17:05.123Z"
-}
-```
-
----
-
 ### `POST /auth/login`
 
-Gera um **JWT** de exemplo.  
-**Body**
-
-```json
-{
-  "username": "igor",
-  "password": "qualquer"
-}
-```
-
-**Resposta**
-
-```json
-{
-  "access_token": "JWT_AQUI"
-}
-```
-
-> Este endpoint é simplificado para o teste técnico: não há verificação real de senha/usuário.
-
----
+Gera um **JWT** de exemplo.
 
 ### `POST /orders`
 
 Processa os pedidos e retorna a distribuição em caixas.
 
-**Headers**
-
-```
-Authorization: Bearer <seu_token_jwt_do_login>
-Content-Type: application/json
-```
-
-**Body (exemplo resumido)**
-
-```json
-{
-  "pedidos": [
-    {
-      "pedido_id": 1,
-      "produtos": [
-        {
-          "produto_id": "PS5",
-          "dimensoes": { "altura": 40, "largura": 10, "comprimento": 25 }
-        },
-        {
-          "produto_id": "Volante",
-          "dimensoes": { "altura": 40, "largura": 30, "comprimento": 30 }
-        }
-      ]
-    }
-  ]
-}
-```
-
-**Resposta (exemplo)**
-
-```json
-{
-  "pedidos": [
-    {
-      "pedido_id": 1,
-      "caixas": [{ "caixa_id": "Caixa 2", "produtos": ["PS5", "Volante"] }]
-    }
-  ]
-}
-```
-
-> A documentação completa dos modelos está no **Swagger**.
-
----
-
 ### Swagger UI
 
 - **URL:** http://localhost:3000/api
-- Inclui schemas de DTO, exemplos e respostas.
 
 ---
 
 ## Testes
 
-Rodar todos os testes:
-
 ```bash
 npm test
-```
-
-Modo watch:
-
-```bash
 npm run test:watch
-```
-
-Cobertura:
-
-```bash
 npm run test:cov
 ```
 
-Testes principais:
-
-- `auth.service.spec.ts` e `auth.controller.spec.ts`
-- `orders.service.spec.ts` (golden test que compara byte-a-byte a saída com o esperado)
-- `orders.controller.spec.ts`
-
 ---
 
-## Exemplos
+# 📊 Exercício 2 — Horários de Aula (SQL)
 
-### Exemplo completo de entrada (10 pedidos)
+Considerando o modelo relacional proposto no enunciado, o script [`exercicio-2-horarios-de-aula/queries.sql`](./exercicio-2-horarios-de-aula/queries.sql) inclui:
 
-Arquivo de exemplo no Swagger e nos testes (`orders.service.spec.ts`).  
-Você pode enviar o JSON completo para `/orders` e validar com o resultado esperado do desafio.
+1. **Criação do banco e tabelas (DDL)**
+2. **Dados de exemplo (INSERTs)**
+3. **Consultas solicitadas (SELECTs)**
 
-### cURL — login + orders
+### 🔎 Exemplo de saída
 
-```bash
-# 1) login
-TOKEN=$(curl -s -X POST http://localhost:3000/auth/login   -H 'Content-Type: application/json'   -d '{"username":"igor","password":"123"}' | jq -r .access_token)
+**Horas por professor**
 
-# 2) orders
-curl -s -X POST http://localhost:3000/orders   -H "Authorization: Bearer $TOKEN"   -H 'Content-Type: application/json'   -d @exemplos/pedidos.json | jq .
+```
+professor_id | professor_name | total_hours
+-------------+----------------+-------------
+2            | Chapatin       | 3
+1            | Girafales      | 2
 ```
 
-> Se não usar `jq`, remova os pipes `| jq -r`/`| jq .`.
+**Salas livres/ocupadas**
+
+```
+room_id | building_id | day_of_week | start_time | end_time | status
+--------+-------------+-------------+------------+----------+---------
+1       | 1           | Monday      | 08:00:00   | 10:00:00 | OCUPADO
+2       | 1           | Tuesday     | 14:00:00   | 17:00:00 | OCUPADO
+3       | 2           | -           | -          | -        | LIVRE
+```
 
 ---
 
-## Troubleshooting
+## 📌 Como rodar
 
-- **`docker: 'compose' is not a docker command'`**  
-  Instale o **Compose v2** (plugin `docker-compose-plugin`) ou use o binário `docker-compose`:
+### Exercício 1
+Veja o [README do exercício 1](./exercicio-1-empacotamento/README.md).
 
-  ```bash
-  # plugin v2 (Ubuntu/Mint)
-  sudo apt-get update
-  sudo apt-get install -y docker-compose-plugin
-  # ou binário v1/v2 standalone
-  sudo curl -L "https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-  sudo chmod +x /usr/local/bin/docker-compose
-  ```
+### Exercício 2
 
-- **Healthcheck falha no container**  
-  Confirme que o **Dockerfile** instala `curl` no estágio de runtime e que o **App** expõe `GET /health`:
-  - `RUN apk add --no-cache curl`
-  - `HEALTHCHECK ... CMD curl -fsS http://127.0.0.1:${PORT}/health || exit 1`
-  - `await app.listen(port, '0.0.0.0')`
+```bash
+mysql -u root -p < exercicio-2-horarios-de-aula/queries.sql
+```
 
-- **Porta ocupada**  
-  Mude o mapeamento de porta no Docker/Compose (ex.: `8080:3000`) e acesse `http://localhost:8080`.
-
-- **JWT inválido (401)**  
-  Lembre de usar o token retornado em `/auth/login` no header `Authorization: Bearer ...`.
+Isso criará a base `escola_chavito`, populará com dados de exemplo e executará as consultas pedidas.
 
 ---
 
-## Licença
+## 📝 Licença
 
 MIT — sinta-se à vontade para usar/estender o projeto.
