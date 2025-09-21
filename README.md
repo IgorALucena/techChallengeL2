@@ -41,6 +41,7 @@ Projeto feito em **NestJS**, com **JWT** (login de exemplo), documentação **Sw
 - [Testes](#testes)
 - [Exemplos](#exemplos)
 - [Troubleshooting](#troubleshooting)
+- [📊 Exercício 2 — Horários de Aula (SQL)](#-exercício-2--horários-de-aula-sql)
 - [Licença](#licença)
 
 ---
