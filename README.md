@@ -357,6 +357,6 @@ Isso criará a base `escola_chavito`, populará com dados de exemplo e executar�
 
 ---
 
-## 📝 Licença
+## Licença
 
 MIT — sinta-se à vontade para usar/estender o projeto.
