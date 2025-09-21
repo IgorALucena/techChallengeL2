@@ -116,7 +116,10 @@ src/
 
 ## Pré-requisitos
 
-- **Node 20+** (apenas para rodar local sem Docker)
+- **Node 20.x** (versão suportada pelo NestJS 11).
+  > ⚠️ Atenção: com Node 22+ pode aparecer o erro  
+  > `[PackageLoader] The "class-validator" package is missing`.  
+  > Para evitar, use Node 20 (sugerido via `.nvmrc`).
 - **Docker** (para rodar com container)
 - **Docker Compose** (opcional; v2 `docker compose` ou v1 `docker-compose`)
 - Porta **3000** disponível no host
@@ -227,11 +230,83 @@ Processa os pedidos e retorna a distribuição em caixas.
 
 ## Testes
 
+Rodar todos os testes:
+
 ```bash
 npm test
+```
+
+Modo watch:
+
+```bash
 npm run test:watch
+```
+
+Cobertura:
+
+```bash
 npm run test:cov
 ```
+
+Testes principais:
+
+- `auth.service.spec.ts` e `auth.controller.spec.ts`
+- `orders.service.spec.ts` (golden test que compara byte-a-byte a saída com o esperado)
+- `orders.controller.spec.ts`
+
+---
+
+## Exemplos
+
+### Exemplo completo de entrada (10 pedidos)
+
+Arquivo de exemplo no Swagger e nos testes (`orders.service.spec.ts`).  
+Você pode enviar o JSON completo para `/orders` e validar com o resultado esperado do desafio.
+
+### cURL — login + orders
+
+```bash
+# 1) login
+TOKEN=$(curl -s -X POST http://localhost:3000/auth/login   -H 'Content-Type: application/json'   -d '{"username":"igor","password":"123"}' | jq -r .access_token)
+
+# 2) orders
+curl -s -X POST http://localhost:3000/orders   -H "Authorization: Bearer $TOKEN"   -H 'Content-Type: application/json'   -d @exemplos/pedidos.json | jq .
+```
+
+> Se não usar `jq`, remova os pipes `| jq -r`/`| jq .`.
+
+---
+
+## Troubleshooting
+
+- **`docker: 'compose' is not a docker command'`**  
+  Instale o **Compose v2** (plugin `docker-compose-plugin`) ou use o binário `docker-compose`:
+
+  ```bash
+  # plugin v2 (Ubuntu/Mint)
+  sudo apt-get update
+  sudo apt-get install -y docker-compose-plugin
+  # ou binário v1/v2 standalone
+  sudo curl -L "https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  sudo chmod +x /usr/local/bin/docker-compose
+  ```
+
+- **Healthcheck falha no container**  
+  Confirme que o **Dockerfile** instala `curl` no estágio de runtime e que o **App** expõe `GET /health`:
+
+  - `RUN apk add --no-cache curl`
+  - `HEALTHCHECK ... CMD curl -fsS http://127.0.0.1:${PORT}/health || exit 1`
+  - `await app.listen(port, '0.0.0.0')`
+
+- **Porta ocupada**  
+  Mude o mapeamento de porta no Docker/Compose (ex.: `8080:3000`) e acesse `http://localhost:8080`.
+
+- **JWT inválido (401)**  
+  Lembre de usar o token retornado em `/auth/login` no header `Authorization: Bearer ...`.
+
+  - **Erro: The "class-validator" package is missing**  
+    Isso pode ocorrer se você rodar localmente com Node 22+.  
+    Solução: use Node 20 (veja `.nvmrc`) ou rode via Docker.
 
 ---
 
@@ -269,6 +344,7 @@ room_id | building_id | day_of_week | start_time | end_time | status
 ## 📌 Como rodar
 
 ### Exercício 1
+
 Veja o [README do exercício 1](./exercicio-1-empacotamento/README.md).
 
 ### Exercício 2

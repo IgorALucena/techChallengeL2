@@ -2,26 +2,8 @@ import { BOXES } from '../../common/constants/box.constant';
 import { BoxDim } from '../../common/types/box-dim.type';
 import { Produto } from '../types/produto.type';
 import { Caixa } from '../types/caixa.type';
-
-type PedidoInput = {
-  pedido_id: number;
-  produtos: {
-    produto_id: string;
-    dimensoes: { altura: number; largura: number; comprimento: number };
-  }[];
-};
-
-type OrdersInput = { pedidos: PedidoInput[] };
-type OrdersOutput = {
-  pedidos: Array<{
-    pedido_id: number;
-    caixas: Array<{
-      caixa_id: string | null;
-      produtos: string[];
-      observacao?: string;
-    }>;
-  }>;
-};
+import { OrdersInput } from '../types/orders-input.type';
+import { OrdersOutput } from '../types/orders-output.type';
 
 const getRotations = (p: Produto) => {
   const { altura, largura, comprimento } = p;
@@ -35,13 +17,13 @@ const getRotations = (p: Produto) => {
   ];
 };
 
-const cabeNaCaixa = (produtos: Produto[], caixa: BoxDim) => {
+const fitsIntTheBox = (produtos: Produto[], box: BoxDim) => {
   const totalVolume = produtos.reduce((a, p) => a + p.volume, 0);
-  const capacidade = caixa.height * caixa.width * caixa.length;
-  if (totalVolume > capacidade) return false;
+  const capacity = box.height * box.width * box.length;
+  if (totalVolume > capacity) return false;
   return produtos.every((p) =>
     getRotations(p).some(
-      (r) => r.h <= caixa.height && r.w <= caixa.width && r.l <= caixa.length,
+      (r) => r.h <= box.height && r.w <= box.width && r.l <= box.length,
     ),
   );
 };
@@ -51,7 +33,7 @@ const BOXES_ASC = [...BOXES].sort(
 );
 
 const pickSmallestBoxForGroup = (produtos: Produto[]) =>
-  BOXES_ASC.find((b) => cabeNaCaixa(produtos, b)) || null;
+  BOXES_ASC.find((b) => fitsIntTheBox(produtos, b)) || null;
 
 const isBigPair = (produtos: Produto[]) => {
   if (produtos.length !== 2) return false;
@@ -63,8 +45,8 @@ const pickSingleBoxForAll = (produtos: Produto[]) => {
   const smallest = pickSmallestBoxForGroup(produtos);
   if (!smallest) return null;
   if (isBigPair(produtos)) {
-    const caixa2 = BOXES.find((b) => b.id === 2);
-    if (caixa2 && cabeNaCaixa(produtos, caixa2)) return caixa2;
+    const box2 = BOXES.find((b) => b.id === 2);
+    if (box2 && fitsIntTheBox(produtos, box2)) return box2;
   }
   return smallest;
 };
@@ -82,11 +64,11 @@ function* bipartitions<T>(arr: T[]) {
   }
 }
 
-const tentarSubconjuntosPreferindoGruposMaiores = (produtos: Produto[]) => {
+const trySubsetsPreferringLargerGroups = (produtos: Produto[]) => {
   if (produtos.length < 4) return null;
 
   let best: null | {
-    grupos: Produto[][];
+    groups: Produto[][];
     caixas: BoxDim[];
     _fitScore: number;
     _groupScore: number;
@@ -96,12 +78,12 @@ const tentarSubconjuntosPreferindoGruposMaiores = (produtos: Produto[]) => {
     if (g1.length < 2 || g2.length < 2) continue;
 
     const caixa1 = pickSmallestBoxForGroup(g1);
-    const caixa2 = pickSmallestBoxForGroup(g2);
-    if (!caixa1 || !caixa2) continue;
+    const box2 = pickSmallestBoxForGroup(g2);
+    if (!caixa1 || !box2) continue;
 
     const fitScore =
       caixa1.height * caixa1.width * caixa1.length +
-      caixa2.height * caixa2.width * caixa2.length;
+      box2.height * box2.width * box2.length;
     const groupScore = g1.length + g2.length;
 
     if (
@@ -110,8 +92,8 @@ const tentarSubconjuntosPreferindoGruposMaiores = (produtos: Produto[]) => {
       (fitScore === best._fitScore && groupScore > best._groupScore)
     ) {
       best = {
-        grupos: [g1, g2],
-        caixas: [caixa1, caixa2],
+        groups: [g1, g2],
+        caixas: [caixa1, box2],
         _fitScore: fitScore,
         _groupScore: groupScore,
       };
@@ -121,12 +103,12 @@ const tentarSubconjuntosPreferindoGruposMaiores = (produtos: Produto[]) => {
   if (!best) return null;
 
   const pairs = [
-    { grupo: best.grupos[0], caixa: best.caixas[0] },
-    { grupo: best.grupos[1], caixa: best.caixas[1] },
+    { grupo: best.groups[0], caixa: best.caixas[0] },
+    { grupo: best.groups[1], caixa: best.caixas[1] },
   ].sort((a, b) => b.caixa.id - a.caixa.id);
 
   return {
-    grupos: pairs.map((p) => p.grupo),
+    groups: pairs.map((p) => p.grupo),
     caixas: pairs.map((p) => p.caixa),
   };
 };
@@ -145,11 +127,11 @@ export function packOrders(input: OrdersInput): OrdersOutput {
       index: i,
     }));
 
-    const particao = tentarSubconjuntosPreferindoGruposMaiores(produtos);
+    const particao = trySubsetsPreferringLargerGroups(produtos);
     if (particao) {
       pedidosResult.push({
         pedido_id: pedido.pedido_id,
-        caixas: particao.grupos.map((grupo, idx) => ({
+        caixas: particao.groups.map((grupo, idx) => ({
           caixa_id: `Caixa ${particao.caixas[idx].id}`,
           produtos: grupo
             .sort((a, b) => a.index - b.index)
@@ -180,7 +162,7 @@ export function packOrders(input: OrdersInput): OrdersOutput {
       let colocado = false;
       for (const caixa of caixasAbertas) {
         if ('dim' in caixa === false) continue;
-        const capacidade =
+        const capacity =
           (caixa as any).dim.height *
           (caixa as any).dim.width *
           (caixa as any).dim.length;
@@ -191,7 +173,7 @@ export function packOrders(input: OrdersInput): OrdersOutput {
             r.w <= (caixa as any).dim.width &&
             r.l <= (caixa as any).dim.length,
         );
-        if (ocupado + produto.volume <= capacidade && cabe) {
+        if (ocupado + produto.volume <= capacity && cabe) {
           caixa.produtos.push(produto);
           colocado = true;
           break;
