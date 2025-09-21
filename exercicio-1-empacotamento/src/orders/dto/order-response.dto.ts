@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class CaixaResponseDto {
   @ApiProperty({
-    example: 'Caixa 1',
+    example: 'Caixa 2',
     nullable: true,
     description:
       'Identificador da caixa usada. Nulo caso não exista caixa disponível.',
@@ -16,7 +16,7 @@ export class CaixaResponseDto {
   produtos: string[];
 
   @ApiProperty({
-    example: 'Produto não cabe em nenhuma caixa disponível.',
+    example: 'Quando houver observações, este campo virá preenchido.',
     required: false,
     description: 'Observação adicional, caso o produto não tenha sido alocado',
   })
