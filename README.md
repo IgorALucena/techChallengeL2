@@ -305,9 +305,9 @@ curl -s -X POST http://localhost:3000/orders   -H "Authorization: Bearer $TOKEN"
 - **JWT inválido (401)**  
   Lembre de usar o token retornado em `/auth/login` no header `Authorization: Bearer ...`.
 
-  - **Erro: The "class-validator" package is missing**  
-    Isso pode ocorrer se você rodar localmente com Node 22+.  
-    Solução: use Node 20 (veja `.nvmrc`) ou rode via Docker.
+- **Erro: The "class-validator" package is missing**  
+  Isso pode ocorrer se você rodar localmente com Node 22+.  
+  Solução: use Node 20 (veja `.nvmrc`) ou rode via Docker.
 
 ---
 
